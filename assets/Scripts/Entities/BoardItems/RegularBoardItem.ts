@@ -17,6 +17,7 @@ export default class RegularBoardItem extends BaseBoardItem {
             return;
         }
 
+        this.subscribeEvents();
         let regularItemDesc =  desc as RegularItemDesc;
         this.regularType = regularItemDesc.getType();
         this.setSpriteFrame(regularItemDesc.getSpriteFrame());
@@ -32,5 +33,11 @@ export default class RegularBoardItem extends BaseBoardItem {
 
     public getRegularType(): string {
         return this.regularType;
+    }
+
+    public reset(): void {
+        super.reset();
+
+        this.regularType = STR_NONE_TYPE;
     }
 }

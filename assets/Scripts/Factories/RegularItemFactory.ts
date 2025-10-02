@@ -41,4 +41,14 @@ export default class RegularItemFactory extends cc.Component {
         node.active = true;
         return comp;
     }
+
+    public returnItem(item: BaseBoardItem): void {
+      if (item == null) {
+        cc.error("Item to return is null");
+        return;
+      }
+
+      item.reset();
+      this.pool.put(item.node);
+    }
 }

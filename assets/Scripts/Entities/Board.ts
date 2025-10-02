@@ -1,6 +1,6 @@
 import BoardFillController from "../Controllers/BoardFillController";
 import RegularItemFactory from "../Factories/RegularItemFactory";
-import BaseBoardItem from "./BoardItems/BaseBoardItem";
+import BaseBoardItem, { BaseBoardItemEvents } from "./BoardItems/BaseBoardItem";
 
 const {ccclass, property} = cc._decorator;
 
@@ -21,6 +21,7 @@ export default class Board extends cc.Component {
     private itemsOffset: cc.Vec2 = cc.v2(100, 100);
     private itemsScreenOffset: cc.Vec2 = cc.v2(150, -900);
     private grid: BaseBoardItem[][] = [];
+    private eventTarget: cc.EventTarget = new cc.EventTarget();
 
     private setupBoard(): void {
         for (let i = 0; i < this.boardSize.x; i++) {
@@ -33,25 +34,48 @@ export default class Board extends cc.Component {
     }
 
     private fillBoard(isInitial: boolean = false): void {
-        if (isInitial) {
-            for (let i = 0; i < this.boardSize.x; i++) {
-                for (let j = 0; j < this.boardSize.y; j++) {
-                    let regularItem = this.regularItemFactory.createRegularItem();
-
-                    if (!regularItem) {
-                        console.error("Regular item is null");
-                        return;
-                    }
-
-                    this.gridHolder.addChild(regularItem.node);
-                    let position = cc.v3(i * this.itemsOffset.x + this.itemsScreenOffset.x, j * this.itemsOffset.y + this.itemsScreenOffset.y, 0);
-                    regularItem.node.setPosition(position);
-                    let desc = this.boardFillController.getRandomRegularItemDesc(); 
-                    this.grid[i][j] = regularItem;
-                    this.grid[i][j].init(desc);
+        for(let x = 0; x < this.boardSize.x; x++) {
+            for (let y = 0; this.boardSize.y; y++) {
+                if (this.grid[x][y] != null) {
+                    continue;
                 }
+
+                let regularItem = this.regularItemFactory.createRegularItem();
+
+                if (!regularItem) {
+                    cc.error("Created regular item is null");
+                    return;
+                }
+
+                let itemDesc = this.boardFillController.getRandomRegularItemDesc();
+                regularItem.init(itemDesc);
+
+                this.gridHolder.addChild(regularItem.node);
+                let position: cc.Vec3 = cc.v3(x * this.itemsOffset.x + this.itemsScreenOffset.x, y * this.itemsOffset.y + this.itemsScreenOffset.y, 0);
+                regularItem.node.setPosition(position);
+
+                this.eventTarget.on(BaseBoardItemEvents.ON_CLICK, this.handleItemClicked);
+
+                this.grid[x][y] = regularItem;
             }
         }
+    }
+
+    private removeItem(item: BaseBoardItem): void {
+        if (item == null) {
+            cc.error("Item is null");
+            return;
+        }
+
+        let itemId = item.getId();
+        this.grid[itemId.x][itemId.y] = null;
+
+        this.regularItemFactory.returnItem(item);
+    }
+
+    private handleItemClicked(itemId: cc.Vec2): void {
+        console.log("Input event handled");
+        this.removeItem(this.grid[itemId.x][itemId.y])
     }
 
     // Public region
