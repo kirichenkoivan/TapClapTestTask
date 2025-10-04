@@ -1,5 +1,5 @@
 import RegularItemDesc from "../Descs/RegularItemDesc";
-import BaseBoardItem from "../Entities/BoardItems/BaseBoardItem";
+import BaseBoardItem, { BaseBoardItemEvents } from "../Entities/BoardItems/BaseBoardItem";
 import RegularBoardItem from "../Entities/BoardItems/RegularBoardItem";
 
 const {ccclass, property} = cc._decorator;
@@ -22,13 +22,15 @@ export default class RegularItemFactory extends cc.Component {
     }
 
     // Public region
-    public createRegularItem(): BaseBoardItem {
+    public getRegularItem(): BaseBoardItem {
         let node: cc.Node = null;
+        let isNew: boolean = false;
 
         if (this.pool.size() > 0) {
           node = this.pool.get();
         } else {
           node = cc.instantiate(this.regularItemPrefab);
+          isNew = true;
         }
     
         const comp = node.getComponent(RegularBoardItem);
@@ -37,18 +39,26 @@ export default class RegularItemFactory extends cc.Component {
           cc.error('RegularItemFactory: prefab не содержит BaseBoardItem');
           return null;
         }
+
+        if (isNew) {
+          comp.getEventTarget().on(BaseBoardItemEvents.ON_WANT_TO_REMOVE, this.returnRegularItem, this);
+        }
     
         node.active = true;
         return comp;
     }
 
-    public returnItem(item: BaseBoardItem): void {
+    public returnRegularItem = (item: BaseBoardItem): void => {
       if (item == null) {
         cc.error("Item to return is null");
         return;
       }
 
       item.reset();
+
+      item.node.stopAllActions();
+      item.node.removeFromParent(false); 
+      item.node.active = false;
       this.pool.put(item.node);
     }
 }

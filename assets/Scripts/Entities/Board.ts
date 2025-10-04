@@ -1,87 +1,82 @@
-import BoardFillController from "../Controllers/BoardFillController";
-import RegularItemFactory from "../Factories/RegularItemFactory";
-import BaseBoardItem, { BaseBoardItemEvents } from "./BoardItems/BaseBoardItem";
+import BoardDestroyController from "../Controllers/BoardControllers/BoardDestroyController";
+import BoardFillController from "../Controllers/BoardControllers/BoardFillController";
+import BoardItemsMoveController from "../Controllers/BoardControllers/BoardItemsMoveController";
+import BaseBoardItem from "./BoardItems/BaseBoardItem";
 
 const {ccclass, property} = cc._decorator;
+
+export class BoardEvents {
+    static ON_MOVE: string = "BOARD_ON_MOVE";
+}
 
 @ccclass
 export default class Board extends cc.Component {
     // Editor region
-    @property(cc.Node)
-    private gridHolder: cc.Node = null;
-
-    @property(RegularItemFactory)
-    private regularItemFactory: RegularItemFactory = null;
-
     @property(BoardFillController)
     private boardFillController: BoardFillController = null;
 
+    @property(BoardDestroyController)
+    private boardDestroyController: BoardDestroyController = null;
+
+    @property(BoardItemsMoveController)
+    private boardItemsMoveController: BoardItemsMoveController = null;
+
+    @property(cc.Vec2) 
+    private itemsOffset: cc.Vec2 = cc.v2(100, 100);
+    
+    @property(cc.Vec2)
+    private itemsScreenOffset: cc.Vec2 = cc.v2(150, -900);
+
     // Private region
     private boardSize: cc.Vec2 = cc.v2(2,2);
-    private itemsOffset: cc.Vec2 = cc.v2(100, 100);
-    private itemsScreenOffset: cc.Vec2 = cc.v2(150, -900);
     private grid: BaseBoardItem[][] = [];
     private eventTarget: cc.EventTarget = new cc.EventTarget();
+    private isItemsFalling: boolean = false;
 
-    private setupBoard(): void {
-        for (let i = 0; i < this.boardSize.x; i++) {
-            this.grid[i] = [];
+    private tryFillBoard(): void {
+        for (let i = 0; i < 3; i++) {
+            this.boardFillController.fillBoard();
 
-            for (let j = 0; j < this.boardSize.y; j++) {
-                this.grid[i][j] = null;
+            if (this.boardDestroyController.hasAnyMatch()) {
+                break;
             }
+
+            this.boardFillController.cleanBoard();
         }
     }
 
-    private fillBoard(isInitial: boolean = false): void {
-        for(let x = 0; x < this.boardSize.x; x++) {
-            for (let y = 0; this.boardSize.y; y++) {
-                if (this.grid[x][y] != null) {
-                    continue;
-                }
-
-                let regularItem = this.regularItemFactory.createRegularItem();
-
-                if (!regularItem) {
-                    cc.error("Created regular item is null");
-                    return;
-                }
-
-                let itemDesc = this.boardFillController.getRandomRegularItemDesc();
-                regularItem.init(itemDesc);
-
-                this.gridHolder.addChild(regularItem.node);
-                let position: cc.Vec3 = cc.v3(x * this.itemsOffset.x + this.itemsScreenOffset.x, y * this.itemsOffset.y + this.itemsScreenOffset.y, 0);
-                regularItem.node.setPosition(position);
-
-                this.eventTarget.on(BaseBoardItemEvents.ON_CLICK, this.handleItemClicked);
-
-                this.grid[x][y] = regularItem;
-            }
-        }
-    }
-
-    private removeItem(item: BaseBoardItem): void {
-        if (item == null) {
-            cc.error("Item is null");
+    private handleItemClicked = async (itemId: cc.Vec2): Promise<void> => {
+        if (this.isItemsFalling) {
             return;
         }
 
-        let itemId = item.getId();
-        this.grid[itemId.x][itemId.y] = null;
+        this.isItemsFalling = true;
+        const destroyedGroupSize = this.boardDestroyController.tryDestroyItemsGroup(itemId);
 
-        this.regularItemFactory.returnItem(item);
-    }
+        if (destroyedGroupSize > 0) {
+            await this.boardItemsMoveController.dropDownItems();
+            this.tryFillBoard();
 
-    private handleItemClicked(itemId: cc.Vec2): void {
-        console.log("Input event handled");
-        this.removeItem(this.grid[itemId.x][itemId.y])
+            this.eventTarget.emit(BoardEvents.ON_MOVE, destroyedGroupSize);  
+        }
+
+        this.isItemsFalling = false;
     }
 
     // Public region
-    public init(sizeX: number, sizeY: number): void {
+    public init(sizeX: number, sizeY: number, minItemsGroupSize: number): void {
         this.boardSize = cc.v2(sizeX, sizeY);
-        this.setupBoard();
-        this.fillBoard(true);
+
+        this.boardFillController.init(this.grid, this.boardSize, this.itemsOffset, this.itemsScreenOffset);
+        this.boardFillController.setRegularItemClickCb(this.handleItemClicked);
+
+        this.boardDestroyController.init(this.grid, this.boardSize, minItemsGroupSize);
+        this.boardItemsMoveController.init(this.grid, this.boardSize, this.itemsOffset, this.itemsScreenOffset);
+
+        this.boardFillController.fillBoard(true);
+    }
+
+    public getEventTarget(): cc.EventTarget {
+        return this.eventTarget;
     }
 }

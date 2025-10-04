@@ -5,6 +5,7 @@ const {ccclass, property} = cc._decorator;
 
 export class BaseBoardItemEvents {
     static ON_CLICK: string = "BASE_BOARD_ITEM_ON_CLICK";
+    static ON_WANT_TO_REMOVE: string = "BASE_BOARD_ITEM_ON_WANT_TO_REMOVE";
 }
 
 @ccclass
@@ -13,22 +14,25 @@ export default abstract class BaseBoardItem extends cc.Component {
     @property(cc.Sprite)
     private sprite: cc.Sprite = null;
 
-    private eventTarget: cc.EventTarget = new cc.EventTarget;
+    // Private region
+    private eventTarget: cc.EventTarget = new cc.EventTarget();
     private id: cc.Vec2 = cc.v2(-1, -1);
+    private isChecked: boolean = false;
 
     // Protected region
     protected subscribeEvents(): void {
-        this.node.on(cc.Node.EventType.MOUSE_DOWN, this.handleMouseDown);
+        this.node.on(cc.Node.EventType.MOUSE_DOWN, this.handleMouseDown, this);
     }
 
     protected unsubscribeEvents(): void {
-        this.node.off(cc.Node.EventType.MOUSE_DOWN, this.handleMouseDown);
+        this.node.off(cc.Node.EventType.MOUSE_DOWN, this.handleMouseDown, this);
+        this.eventTarget.off(BaseBoardItemEvents.ON_CLICK);
     }
 
     protected handleMouseDown(): void {
         this.eventTarget.emit(BaseBoardItemEvents.ON_CLICK, this.id);
     }
-
+    
     // Public region
     public abstract init(desc: BaseBoardItemDesc): void;
 
@@ -52,8 +56,25 @@ export default abstract class BaseBoardItem extends cc.Component {
         return this.id;
     }
 
+    public getEventTarget(): cc.EventTarget {
+        return this.eventTarget;
+    }
+
+    public setChecked(isChecked: boolean): void {
+        this.isChecked = isChecked;
+    }
+
+    public getChecked(): boolean {
+        return this.isChecked;
+    }
+
     public reset(): void {
         this.id = cc.v2(-1, -1);
+        this.isChecked = false;
         this.unsubscribeEvents();
+    }
+
+    public fireWantToRemove(): void {
+        this.eventTarget.emit(BaseBoardItemEvents.ON_WANT_TO_REMOVE, this);
     }
 }
