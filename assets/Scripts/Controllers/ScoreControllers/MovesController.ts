@@ -28,7 +28,7 @@ export default class MovesController extends cc.Component {
         return this.eventTarget;
     }
 
-    public decreseMovesCount(): void {
+    public decreaseMovesCount(): void {
         this.allowedMoves--;
         this.updateMovesLabel();
 

@@ -26,7 +26,6 @@ export default abstract class BaseBoardItem extends cc.Component {
 
     protected unsubscribeEvents(): void {
         this.node.off(cc.Node.EventType.MOUSE_DOWN, this.handleMouseDown, this);
-        this.eventTarget.off(BaseBoardItemEvents.ON_CLICK);
     }
 
     protected handleMouseDown(): void {

@@ -62,7 +62,7 @@ export default class Level extends cc.Component {
     private scoreMultiplier: number = 1.0;
 
     // Private region
-    private subsriveEvents(): void {
+    private subscribeEvents(): void {
         this.board.getEventTarget().on(BoardEvents.ON_MOVE, this.handleMove);
         this.movesController.getEventTarget().on(MovesControllerEvents.ON_NO_MOVES_LEFT, () => {this.handleFinishGame(false)});
         this.scoreController.getEventTarget().on(ScoreControllerEvents.ON_SCORE_SUCCESS, () => {this.handleFinishGame(true)});
@@ -75,7 +75,7 @@ export default class Level extends cc.Component {
 
     private handleMove = (groupSize: number): void => {
         this.scoreController.updateScore(groupSize);
-        this.movesController.decreseMovesCount();
+        this.movesController.decreaseMovesCount();
     }
 
     // Protected region
@@ -84,10 +84,20 @@ export default class Level extends cc.Component {
             console.error("Board component is null");
             return;
         }
+
+        if (!this.movesController) {
+            console.error("MovesController component is null");
+            return;
+        }
+
+        if (!this.scoreController) {
+            console.error("ScoreController component is null");
+            return;
+        }
         
         this.board.init(this.boardSizeX, this.boardSizeY, this.minItemsGroupSize);
         this.movesController.init(this.allowedMoves);
         this.scoreController.init(this.requiredScore, this.scoreMultiplier);
-        this.subsriveEvents();
+        this.subscribeEvents();
     }
 }

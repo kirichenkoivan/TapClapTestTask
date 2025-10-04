@@ -25,7 +25,7 @@ export default class BoardItemsMoveController extends cc.Component {
         return cc.v2(id.x * this.itemsOffset.x + this.itemsScreenOffset.x, id.y * this.itemsOffset.y + this.itemsScreenOffset.y);
     }
 
-    private handleItemsFalled = (): void => {
+    private handleItemsFallen = (): void => {
         this.fallingItemsCount--;
 
         if (this.fallingItemsCount <= 0) {
@@ -41,7 +41,7 @@ export default class BoardItemsMoveController extends cc.Component {
         this.itemsScreenOffset = itemsScreenOffset;
     }
 
-    public getEventTarger(): cc.EventTarget {
+    public getEventTarget(): cc.EventTarget {
         return this.eventTarget;
     }
 
@@ -74,7 +74,7 @@ export default class BoardItemsMoveController extends cc.Component {
 
                         cc.tween(item.node)
                             .to(this.itemsMoveSpeed * (y - ny), { position: cc.v3(targetPos.x, targetPos.y, 0) })
-                            .call(this.handleItemsFalled)
+                            .call(this.handleItemsFallen)
                             .start();
                     }
 
@@ -100,7 +100,7 @@ export default class BoardItemsMoveController extends cc.Component {
         });
 
         this.dropPromise = promise;
-        promise.then(() => {this.dropPromise = null}, () => {this.dropPromise = null;})
+        promise.then(() => {this.dropPromise = null})
 
         return this.dropPromise;
     }

@@ -16,7 +16,7 @@ export default class BoardDestroyController extends cc.Component {
         return id.x < this.gridSize.x && id.x >= 0 && id.y < this.gridSize.y && id.y >= 0;
     }
 
-    private resetItemsCheched(): void {
+    private resetItemsChecked(): void {
         for (let x = 0; x < this.gridSize.x; x++) {
             for (let y = 0; y < this.gridSize.y; y++) {
                 if (this.grid[x][y] == null) {
@@ -28,25 +28,25 @@ export default class BoardDestroyController extends cc.Component {
         }
     }
 
-    private getNeighbors( id: cc.Vec2): BaseBoardItem[] {
+    private getNeighbors(id: cc.Vec2): BaseBoardItem[] {
         let stack: cc.Vec2[] = [];
-        let nedighbours: BaseBoardItem[] = [];
+        let neighbors: BaseBoardItem[] = [];
 
         const startItem = this.grid[id.x][id.y];
         
-        if (!(startItem instanceof RegularBoardItem)) {
+        if (startItem.getEntityType() != BoardEntitiesTypes.REGULAR_ITEM) {
             return [startItem];
         }
 
         stack.push(id);
         startItem.setChecked(true);
 
-        let type = startItem.getRegularType();
+        let type = (startItem as RegularBoardItem).getRegularType();
 
         while(stack.length > 0) {
             const pos = stack.pop();
 
-            nedighbours.push(this.grid[pos.x][pos.y]);
+            neighbors.push(this.grid[pos.x][pos.y]);
 
             for(let i = 0; i < directions.length; i++) {
                 let nx = pos.x + directions[i].x;
@@ -74,7 +74,7 @@ export default class BoardDestroyController extends cc.Component {
             }
         }
 
-        return nedighbours;
+        return neighbors;
     }
 
     // Public region
@@ -88,7 +88,7 @@ export default class BoardDestroyController extends cc.Component {
         const group = this.getNeighbors(id);
 
         if (group.length < this.minItemsGroupSize) {
-            this.resetItemsCheched();
+            this.resetItemsChecked();
             return 0;
         }
 
@@ -98,23 +98,23 @@ export default class BoardDestroyController extends cc.Component {
             this.grid[id.x][id.y] = null;
         }
 
-        this.resetItemsCheched();
+        this.resetItemsChecked();
         return group.length;
     }
 
     public hasAnyMatch(): boolean {
         for (let x = 0; x < this.gridSize.x; x++) {
             for (let y = 0; y < this.gridSize.y; y++) {
-                const type = this.grid[x][y];
                 const group = this.getNeighbors(cc.v2(x,y));
 
                 if (group.length >= this.minItemsGroupSize) {
-                    this.resetItemsCheched();
+                    this.resetItemsChecked();
                     return true;
                 }
             }
         }
 
+        this.resetItemsChecked();
         return false;
     }
 }

@@ -1,4 +1,3 @@
-import RegularItemDesc from "../Descs/RegularItemDesc";
 import BaseBoardItem, { BaseBoardItemEvents } from "../Entities/BoardItems/BaseBoardItem";
 import RegularBoardItem from "../Entities/BoardItems/RegularBoardItem";
 
