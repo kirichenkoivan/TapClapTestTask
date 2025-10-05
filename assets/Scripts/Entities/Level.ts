@@ -1,7 +1,7 @@
 import MovesController, { MovesControllerEvents } from "../Controllers/ScoreControllers/MovesController";
 import ScoreController, { ScoreControllerEvents } from "../Controllers/ScoreControllers/ScoreController";
 import FinishGamePopupUiController from "../Controllers/UiControllers/FinishGameUiController";
-import Board, { BoardEvents } from "./Board";
+import Board, { BoardEvents, IBoardConfig } from "./Board";
 
 const {ccclass, property} = cc._decorator;
 
@@ -61,9 +61,17 @@ export default class Level extends cc.Component {
     })
     private scoreMultiplier: number = 1.0;
 
+    @property({
+        type: cc.Integer,
+        min: 1, 
+        max: 10
+    })
+    private allowedBoardRefreshesCount: number = 1; 
+
     // Private region
     private subscribeEvents(): void {
         this.board.getEventTarget().on(BoardEvents.ON_MOVE, this.handleMove);
+        this.board.getEventTarget().on(BoardEvents.ON_NO_AVAILABLE_MATCHES, () => {this.handleFinishGame(false)});
         this.movesController.getEventTarget().on(MovesControllerEvents.ON_NO_MOVES_LEFT, () => {this.handleFinishGame(false)});
         this.scoreController.getEventTarget().on(ScoreControllerEvents.ON_SCORE_SUCCESS, () => {this.handleFinishGame(true)});
     }
@@ -95,7 +103,13 @@ export default class Level extends cc.Component {
             return;
         }
         
-        this.board.init(this.boardSizeX, this.boardSizeY, this.minItemsGroupSize);
+        let boardConfig: IBoardConfig = {
+            boardSize: cc.v2(this.boardSizeX, this.boardSizeY),
+            maxBoardRefreshCount: this.allowedBoardRefreshesCount,
+            minItemGroupSize: this.minItemsGroupSize
+        };
+
+        this.board.init(boardConfig);
         this.movesController.init(this.allowedMoves);
         this.scoreController.init(this.requiredScore, this.scoreMultiplier);
         this.subscribeEvents();

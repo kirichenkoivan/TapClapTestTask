@@ -30,7 +30,7 @@ export default class BoardFillController extends cc.Component {
             return null;
         }
         
-        let rndId = randomInt(0, this.regularItemsDescs.length - 1);
+        const rndId = randomInt(0, this.regularItemsDescs.length - 1);
         return this.regularItemsDescs[rndId];
     }
 
@@ -46,30 +46,26 @@ export default class BoardFillController extends cc.Component {
         this.itemClickCb = cb;
     }
 
-    public fillBoard(isInitial: boolean = false): void {
-        if (isInitial) {
-            this.cleanBoard();
-        }
-
+    public fillBoard(): void {
         for(let x = 0; x < this.gridSize.x; x++) {
             for (let y = 0; y < this.gridSize.y; y++) {
                 if (this.grid[x][y] != null) {
                     continue;
                 }
 
-                let regularItem = this.regularItemFactory.getRegularItem();
+                const regularItem = this.regularItemFactory.getRegularItem();
 
                 if (!regularItem) {
                     cc.error("Created regular item is null");
                     return;
                 }
 
-                let itemDesc = this.getRandomRegularItemDesc();
+                const itemDesc = this.getRandomRegularItemDesc();
                 regularItem.init(itemDesc);
                 regularItem.setId(cc.v2(x,y));
 
                 this.gridHolder.addChild(regularItem.node);
-                let position: cc.Vec3 = cc.v3(x * this.itemsOffset.x + this.itemsScreenOffset.x, y * this.itemsOffset.y + this.itemsScreenOffset.y, 0);
+                const position: cc.Vec3 = cc.v3(x * this.itemsOffset.x + this.itemsScreenOffset.x, y * this.itemsOffset.y + this.itemsScreenOffset.y, 0);
                 regularItem.node.setPosition(position);
 
                 regularItem.getEventTarget().on(BaseBoardItemEvents.ON_CLICK, this.itemClickCb, this);
@@ -94,12 +90,18 @@ export default class BoardFillController extends cc.Component {
         this.regularItemFactory.returnRegularItem(item);
     }
 
-    public cleanBoard(): void {
-        for (let i = 0; i < this.gridSize.x; i++) {
-            this.grid[i] = [];
+    public cleanBoard(isInitial: boolean = false): void {
+        for (let x = 0; x < this.gridSize.x; x++) {
+            if (isInitial) {
+                this.grid[x] = [];
+            }
 
-            for (let j = 0; j < this.gridSize.y; j++) {
-                this.grid[i][j] = null;
+            for (let y = 0; y < this.gridSize.y; y++) {
+                if (!isInitial && this.grid[x][y] != null) {
+                    this.grid[x][y].fireWantToRemove();
+                }
+
+                this.grid[x][y] = null;
             }
         }
     }

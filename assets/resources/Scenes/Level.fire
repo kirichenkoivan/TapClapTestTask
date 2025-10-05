@@ -2358,10 +2358,11 @@
     },
     "boardSizeX": 8,
     "boardSizeY": 8,
-    "minItemsGroupSize": 2,
-    "allowedMoves": 10,
+    "minItemsGroupSize": 5,
+    "allowedMoves": 20,
     "requiredScore": 50,
     "scoreMultiplier": 2,
+    "allowedBoardRefreshesCount": 1,
     "_id": "8bs4ekxUJBdpgEJAaFpMOK"
   }
 ]

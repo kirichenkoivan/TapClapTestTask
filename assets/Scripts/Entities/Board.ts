@@ -7,6 +7,13 @@ const {ccclass, property} = cc._decorator;
 
 export class BoardEvents {
     static ON_MOVE: string = "BOARD_ON_MOVE";
+    static ON_NO_AVAILABLE_MATCHES: string = "BOARD_ON_NO_AVAILABLE_MATCHES";
+}
+
+export interface IBoardConfig {
+    boardSize: cc.Vec2;
+    minItemGroupSize: number;
+    maxBoardRefreshCount: number;
 }
 
 @ccclass
@@ -32,17 +39,22 @@ export default class Board extends cc.Component {
     private grid: BaseBoardItem[][] = [];
     private eventTarget: cc.EventTarget = new cc.EventTarget();
     private isItemsFalling: boolean = false;
+    private maxBoardRefreshCount: number = 0;
+    private currentBoardRefreshCount: number = 0;
 
-    private tryFillBoard(): void {
-        for (let i = 0; i < 3; i++) {
+    private tryFillBoard(isInitial: boolean = false): void {
+        while(this.currentBoardRefreshCount <= this.maxBoardRefreshCount) {
             this.boardFillController.fillBoard();
 
             if (this.boardDestroyController.hasAnyMatch()) {
-                break;
+                return;
             }
 
             this.boardFillController.cleanBoard();
+            this.currentBoardRefreshCount++;
         }
+
+        this.eventTarget.emit(BoardEvents.ON_NO_AVAILABLE_MATCHES);
     }
 
     private handleItemClicked = async (itemId: cc.Vec2): Promise<void> => {
@@ -64,16 +76,18 @@ export default class Board extends cc.Component {
     }
 
     // Public region
-    public init(sizeX: number, sizeY: number, minItemsGroupSize: number): void {
-        this.boardSize = cc.v2(sizeX, sizeY);
+    public init(config: IBoardConfig): void {
+        this.boardSize = config.boardSize;
+        this.maxBoardRefreshCount = config.minItemGroupSize;
 
         this.boardFillController.init(this.grid, this.boardSize, this.itemsOffset, this.itemsScreenOffset);
         this.boardFillController.setRegularItemClickCb(this.handleItemClicked);
 
-        this.boardDestroyController.init(this.grid, this.boardSize, minItemsGroupSize);
+        this.boardDestroyController.init(this.grid, this.boardSize, config.minItemGroupSize);
         this.boardItemsMoveController.init(this.grid, this.boardSize, this.itemsOffset, this.itemsScreenOffset);
 
-        this.boardFillController.fillBoard(true);
+        this.boardFillController.cleanBoard(true);
+        this.tryFillBoard(true);
     }
 
     public getEventTarget(): cc.EventTarget {
