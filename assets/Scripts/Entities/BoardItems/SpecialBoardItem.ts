@@ -1,6 +1,6 @@
 import BaseBoardItemDesc from "../../Descs/BaseBoardItemDesc";
 import SpecialBoardItemDesc from "../../Descs/SpecialBoardItemDesc";
-import { BoardEntitiesTypes, SpecialItemsAbilityTypes, STR_NONE_TYPE } from "../../Globals/GlobalConstants";
+import { BoardEntitiesTypes, SpecialItemsAbilityTypes, STR_NONE_TYPE } from "../../Globals/Globals";
 import BaseBoardItem from "./BaseBoardItem";
 
 const {ccclass} = cc._decorator;
@@ -9,6 +9,7 @@ const {ccclass} = cc._decorator;
 export default class SpecialBoardItem extends BaseBoardItem {
     // Private region
     private abilityType: SpecialItemsAbilityTypes = SpecialItemsAbilityTypes.NONE;
+    private additionalArgs: number[] = [];
 
     // Public region
     public init(desc: BaseBoardItemDesc): void {
@@ -21,6 +22,7 @@ export default class SpecialBoardItem extends BaseBoardItem {
         const specialItemDesc = desc as SpecialBoardItemDesc;
         this.abilityType = specialItemDesc.getAbilityType();
         this.setSpriteFrame(specialItemDesc.getSpriteFrame());
+        this.additionalArgs = specialItemDesc.getAdditionalArgs();
     }
 
     public getEntityType(): BoardEntitiesTypes {
@@ -29,5 +31,9 @@ export default class SpecialBoardItem extends BaseBoardItem {
 
     public getAbilityType(): SpecialItemsAbilityTypes {
         return this.abilityType;
+    }
+
+    public getAdditionalArgs(): number[] {
+        return this.additionalArgs;
     }
 }

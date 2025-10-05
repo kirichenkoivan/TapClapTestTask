@@ -22,8 +22,8 @@ export default class RegularItemFactory extends cc.Component {
 
     // Public region
     public getRegularItem(): BaseBoardItem {
-        let node: cc.Node = null;
-        let isNew: boolean = false;
+        let node = null;
+        let isNew = false;
 
         if (this.pool.size() > 0) {
           node = this.pool.get();
@@ -35,7 +35,7 @@ export default class RegularItemFactory extends cc.Component {
         const comp = node.getComponent(RegularBoardItem);
 
         if (!comp) {
-          cc.error('RegularItemFactory: prefab не содержит BaseBoardItem');
+          cc.error('Regular item prefab does not contain a regular item component');
           return null;
         }
 

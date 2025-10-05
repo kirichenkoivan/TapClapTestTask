@@ -1,5 +1,5 @@
 import BaseBoardItemDesc from "../../Descs/BaseBoardItemDesc";
-import { BoardEntitiesTypes } from "../../Globals/GlobalConstants";
+import { BoardEntitiesTypes } from "../../Globals/Globals";
 
 const {ccclass, property} = cc._decorator;
 

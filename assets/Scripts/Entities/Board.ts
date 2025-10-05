@@ -1,6 +1,6 @@
-import BoardDestroyController from "../Controllers/BoardControllers/BoardDestroyController";
-import BoardFillController from "../Controllers/BoardControllers/BoardFillController";
-import BoardItemsMoveController from "../Controllers/BoardControllers/BoardItemsMoveController";
+import BoardDestroyController, { BoardDestroyControllerEvents, IBoardDestroyControllerConfig } from "../Controllers/BoardControllers/BoardDestroyController";
+import BoardFillController, { IBoardFillControllerConfig } from "../Controllers/BoardControllers/BoardFillController";
+import BoardItemsMoveController, { IBoardItemsMoveControllerConfig } from "../Controllers/BoardControllers/BoardItemsMoveController";
 import BoardSpecialItemsController from "../Controllers/BoardControllers/BoardSpecialItemsController";
 import BaseBoardItem from "./BoardItems/BaseBoardItem";
 
@@ -12,7 +12,7 @@ export class BoardEvents {
 }
 
 export interface IBoardConfig {
-    boardSize: cc.Vec2;
+    gridSize: cc.Vec2;
     minItemGroupSize: number;
     maxBoardRefreshCount: number;
 }
@@ -39,7 +39,7 @@ export default class Board extends cc.Component {
     private itemsScreenOffset: cc.Vec2 = cc.v2(150, -900);
 
     // Private region
-    private boardSize: cc.Vec2 = cc.v2(2,2);
+    private gridSize: cc.Vec2 = cc.v2(2,2);
     private grid: BaseBoardItem[][] = [];
     private eventTarget: cc.EventTarget = new cc.EventTarget();
     private isItemsFalling: boolean = false;
@@ -61,40 +61,71 @@ export default class Board extends cc.Component {
         this.eventTarget.emit(BoardEvents.ON_NO_AVAILABLE_MATCHES);
     }
 
-    private handleItemClicked = async (itemId: cc.Vec2): Promise<void> => {
+    private handleItemClicked = (itemId: cc.Vec2): void => {
+        if (this.isItemsFalling) {
+            return;
+        }
+
+        this.boardDestroyController.tryDestroyItemsGroup(itemId);
+    }
+
+    private handleItemGroupDestroyed = async (groupSize: number, id: cc.Vec2, isBySpecialItem: boolean): Promise<void> => {
         if (this.isItemsFalling) {
             return;
         }
 
         this.isItemsFalling = true;
-        const destroyedGroupSize = this.boardDestroyController.tryDestroyItemsGroup(itemId);
 
-        if (destroyedGroupSize > 0) {
-            const specialItemDesc = this.boardSpecialItemsController.getSpecialItemDescByAmount(destroyedGroupSize);
+        if (groupSize > 0) {
+            if (!isBySpecialItem) {
+                const specialItemDesc = this.boardSpecialItemsController.getSpecialItemDescByAmount(groupSize);
 
-            if (specialItemDesc != null) {
-                this.boardFillController.createSpecialItem(specialItemDesc, itemId);
+                if (specialItemDesc != null) {
+                    this.boardFillController.createSpecialItem(specialItemDesc, id);
+                }
             }
 
             await this.boardItemsMoveController.dropDownItems();
             this.tryFillBoard();
 
-            this.eventTarget.emit(BoardEvents.ON_MOVE, destroyedGroupSize);  
-        }
+            this.eventTarget.emit(BoardEvents.ON_MOVE, groupSize);  
+        }  
 
         this.isItemsFalling = false;
     }
 
     // Public region
     public init(config: IBoardConfig): void {
-        this.boardSize = config.boardSize;
+        this.gridSize = config.gridSize;
         this.maxBoardRefreshCount = config.minItemGroupSize;
 
-        this.boardFillController.init(this.grid, this.boardSize, this.itemsOffset, this.itemsScreenOffset);
+        const boardFillControllerConfig: IBoardFillControllerConfig = {
+            grid: this.grid,
+            gridSize: this.gridSize,
+            itemsOffset: this.itemsOffset,
+            itemsScreenOffset: this.itemsScreenOffset
+        }
+
+        this.boardFillController.init(boardFillControllerConfig);
         this.boardFillController.setRegularItemClickCb(this.handleItemClicked);
 
-        this.boardDestroyController.init(this.grid, this.boardSize, config.minItemGroupSize);
-        this.boardItemsMoveController.init(this.grid, this.boardSize, this.itemsOffset, this.itemsScreenOffset);
+        const boardDestroyControllerConfig: IBoardDestroyControllerConfig = {
+            grid: this.grid,
+            gridSize: this.gridSize,
+            minItemsGroupSize: config.minItemGroupSize
+        }
+
+        this.boardDestroyController.init(boardDestroyControllerConfig);
+        this.boardDestroyController.getEventTarget().on(BoardDestroyControllerEvents.ON_ITEMS_GROUP_DESTROYED, this.handleItemGroupDestroyed, this);
+
+        const boardItemsMoveControllerConfig: IBoardItemsMoveControllerConfig = {
+            grid: this.grid,
+            gridSize: this.gridSize,
+            itemsOffset: this.itemsOffset,
+            itemsScreenOffset: this.itemsScreenOffset
+        }
+
+        this.boardItemsMoveController.init(boardItemsMoveControllerConfig);
 
         this.boardFillController.cleanBoard(true);
         this.tryFillBoard();

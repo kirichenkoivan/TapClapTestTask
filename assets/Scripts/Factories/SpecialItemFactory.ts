@@ -7,22 +7,22 @@ const {ccclass, property} = cc._decorator;
 export default class SpecialItemFactory extends cc.Component {
     // Editor region
     @property(cc.Prefab)
-    private itemPrefab: cc.Prefab = null;
+    private specialItemPrefab: cc.Prefab = null;
 
     // Protected region
     protected onLoad(): void {
-        if (this.itemPrefab == null) {
+        if (this.specialItemPrefab == null) {
             console.error("Item prefab is null");
         }    
     }
 
     // Public region
     public createSpecialItem(): BaseBoardItem {
-        const node = cc.instantiate(this.itemPrefab);
+        const node = cc.instantiate(this.specialItemPrefab);
         const comp = node.getComponent(SpecialBoardItem);
 
         if (!comp) {
-            cc.error("Special item prefab err");
+            cc.error("Special item prefab does not contain a special item component");
             return null;
         }
 
@@ -39,6 +39,6 @@ export default class SpecialItemFactory extends cc.Component {
         item.reset();
         
         item.node.stopAllActions();
-        item.destroy();
+        item.node.destroy();
     }
 }   

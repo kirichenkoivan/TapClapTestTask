@@ -104,7 +104,7 @@ export default class Level extends cc.Component {
         }
         
         let boardConfig: IBoardConfig = {
-            boardSize: cc.v2(this.boardSizeX, this.boardSizeY),
+            gridSize: cc.v2(this.boardSizeX, this.boardSizeY),
             maxBoardRefreshCount: this.allowedBoardRefreshesCount,
             minItemGroupSize: this.minItemsGroupSize
         };

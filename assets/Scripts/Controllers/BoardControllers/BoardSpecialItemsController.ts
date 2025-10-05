@@ -1,7 +1,7 @@
 import SpecialBoardItemDesc from "../../Descs/SpecialBoardItemDesc";
 import BaseBoardItem from "../../Entities/BoardItems/BaseBoardItem";
 import SpecialBoardItem from "../../Entities/BoardItems/SpecialBoardItem";
-import { BoardEntitiesTypes, SpecialItemsAbilityTypes } from "../../Globals/GlobalConstants";
+import { BoardEntitiesTypes, SpecialItemsAbilityTypes } from "../../Globals/Globals";
 import BoardDestroyController from "./BoardDestroyController";
 
 const {ccclass, property} = cc._decorator;
@@ -21,15 +21,15 @@ export default class BoardSpecialItemsController extends cc.Component {
     }
 
     private clearItemsInLine(id: cc.Vec2): void {
-
+        this.boardDestroyController.destroyItemsInLine(id);
     }
 
     private clearItemsInRadius(id: cc.Vec2, radius: number): void {
-
+        this.boardDestroyController.destroyItemsInRadius(id, radius);
     }
 
-    private clearAllItem(): void {
-
+    private clearAllItem(id: cc.Vec2): void {
+        this.boardDestroyController.destroyAllItems(id);
     }
 
     // Protected region
@@ -65,10 +65,17 @@ export default class BoardSpecialItemsController extends cc.Component {
                 this.clearItemsInLine(specialItem.getId());
                 break;
             case SpecialItemsAbilityTypes.CLEAR_ITEMS_IN_RADIUS:
-                this.clearItemsInRadius(specialItem.getId(), 1);
+                const args = specialItem.getAdditionalArgs();
+                let radius = 1;
+
+                if (args.length != 0) {
+                    radius = args[0];
+                }
+
+                this.clearItemsInRadius(specialItem.getId(), radius);
                 break;
             case SpecialItemsAbilityTypes.CLEAR_ALL_ITEMS:
-                this.clearAllItem();
+                this.clearAllItem(specialItem.getId());
                 break;
             default:
                 cc.error("Unknown ability type");

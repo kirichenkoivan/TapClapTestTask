@@ -1,5 +1,5 @@
 import BaseBoardItem from "./BaseBoardItem";
-import { BoardEntitiesTypes, STR_NONE_TYPE } from "../../Globals/GlobalConstants";
+import { BoardEntitiesTypes, STR_NONE_TYPE } from "../../Globals/Globals";
 import BaseBoardItemDesc from "../../Descs/BaseBoardItemDesc";
 import RegularItemDesc from "../../Descs/RegularItemDesc";
 

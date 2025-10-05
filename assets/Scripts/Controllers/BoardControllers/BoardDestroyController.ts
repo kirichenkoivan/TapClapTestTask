@@ -1,16 +1,32 @@
 import BaseBoardItem from "../../Entities/BoardItems/BaseBoardItem";
 import RegularBoardItem from "../../Entities/BoardItems/RegularBoardItem";
-import { BoardEntitiesTypes } from "../../Globals/GlobalConstants";
+import { BoardEntitiesTypes } from "../../Globals/Globals";
+import BoardSpecialItemsController from "./BoardSpecialItemsController";
 
-const {ccclass} = cc._decorator;
+const {ccclass, property} = cc._decorator;
 const directions: cc.Vec2[] = [cc.v2(0,-1), cc.v2(0,1), cc.v2(-1,0), cc.v2(1,0)];
+
+export class BoardDestroyControllerEvents {
+    static ON_ITEMS_GROUP_DESTROYED: string = "BOARD_DESTROY_CONTROLLER_ITEMS_GROUP_DESTROYED";
+}
+
+export interface IBoardDestroyControllerConfig {
+    grid: BaseBoardItem[][],
+    gridSize: cc.Vec2,
+    minItemsGroupSize: number
+}
 
 @ccclass
 export default class BoardDestroyController extends cc.Component {    
+    // Editor region
+    @property(BoardSpecialItemsController)
+    private boardSpecialItemsController: BoardSpecialItemsController = null;
+
     // Private region
     private minItemsGroupSize: number = 2;
     private grid: BaseBoardItem[][] = null;
     private gridSize: cc.Vec2 = cc.v2(0,0);
+    private eventTarget: cc.EventTarget = new cc.EventTarget();
 
     private isSafeId(id: cc.Vec2): boolean {
         return id.x < this.gridSize.x && id.x >= 0 && id.y < this.gridSize.y && id.y >= 0;
@@ -78,18 +94,29 @@ export default class BoardDestroyController extends cc.Component {
     }
 
     // Public region
-    public init(grid: BaseBoardItem[][], size: cc.Vec2, minItemsGroupSize: number): void {
-        this.grid = grid;
-        this.gridSize = size;
-        this.minItemsGroupSize = minItemsGroupSize;
+    public init(config: IBoardDestroyControllerConfig): void {
+        this.grid = config.grid;
+        this.gridSize = config.gridSize;
+        this.minItemsGroupSize = config.minItemsGroupSize;
     }
 
-    public tryDestroyItemsGroup(id: cc.Vec2): number {
+    public getEventTarget(): cc.EventTarget {
+        return this.eventTarget;
+    }
+
+    public tryDestroyItemsGroup(id: cc.Vec2): void {
+        const item = this.grid[id.x][id.y];
+
+        if (item.getEntityType() == BoardEntitiesTypes.SPECIAL_ITEM) {
+            this.boardSpecialItemsController.activateSpecialItemAbility(item);
+            return;
+        }
+
         const group = this.getNeighbors(id);
 
         if (group.length < this.minItemsGroupSize) {
             this.resetItemsChecked();
-            return 0;
+            return;
         }
 
         for (let i = 0; i < group.length; i++) {
@@ -99,7 +126,7 @@ export default class BoardDestroyController extends cc.Component {
         }
 
         this.resetItemsChecked();
-        return group.length;
+        this.eventTarget.emit(BoardDestroyControllerEvents.ON_ITEMS_GROUP_DESTROYED, group.length, id, false);
     }
 
     public hasAnyMatch(): boolean {
@@ -127,5 +154,63 @@ export default class BoardDestroyController extends cc.Component {
             this.grid[id.x][y].fireWantToRemove();
             this.grid[id.x][y] = null;
         }
+
+        this.eventTarget.emit(BoardDestroyControllerEvents.ON_ITEMS_GROUP_DESTROYED, this.gridSize.y, id, true);
+    }
+
+    public destroyItemsInLine(id: cc.Vec2): void {
+        for (let x = 0; x < this.gridSize.x; x++) {
+            if (this.grid[x][id.y] == null) {
+                continue;
+            }
+
+            this.grid[x][id.y].fireWantToRemove();
+            this.grid[x][id.y] = null;
+        }
+
+        this.eventTarget.emit(BoardDestroyControllerEvents.ON_ITEMS_GROUP_DESTROYED, this.gridSize.x, id, true);
+    }
+
+    public destroyItemsInRadius(id: cc.Vec2, radius: number): void {
+        let group: BaseBoardItem[] = [];
+
+        for(let x = -radius; x <= radius; x++) {
+            for (let y = -radius; y <= radius; y++) {
+                if (Math.max(Math.abs(x), Math.abs(y)) > radius) {
+                    continue; 
+                }
+
+                const nx = id.x + x;
+                const ny = id.y + y;
+
+                if (!this.isSafeId(cc.v2(nx, ny))) {
+                    continue;
+                }
+
+                group.push(this.grid[nx][ny]);
+                this.grid[nx][ny] = null;
+            }
+        }
+
+        for (let i = 0; i < group.length; i++) {
+            group[i].fireWantToRemove();
+        }
+
+        this.eventTarget.emit(BoardDestroyControllerEvents.ON_ITEMS_GROUP_DESTROYED, group.length, id, true);
+    }
+
+    public destroyAllItems(id: cc.Vec2): void {
+        for (let x = 0; x < this.gridSize.x; x++) {
+            for (let y = 0; y < this.gridSize.y; y++) {
+                if (this.grid[x][y] == null) {
+                    continue;
+                }
+
+                this.grid[x][y].fireWantToRemove();
+                this.grid[x][y] = null;
+            }
+        }
+
+        this.eventTarget.emit(BoardDestroyControllerEvents.ON_ITEMS_GROUP_DESTROYED, this.gridSize.x * this.gridSize.y, id, true);
     }
 }

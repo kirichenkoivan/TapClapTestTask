@@ -1,4 +1,4 @@
-import { STR_NONE_TYPE } from "../Globals/GlobalConstants";
+import { STR_NONE_TYPE } from "../Globals/Globals";
 import BaseBoarItemDesc from "./BaseBoardItemDesc";
 
 const {ccclass, property} = cc._decorator;

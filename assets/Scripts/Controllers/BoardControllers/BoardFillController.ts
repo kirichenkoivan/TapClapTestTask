@@ -3,9 +3,16 @@ import SpecialBoardItemDesc from "../../Descs/SpecialBoardItemDesc";
 import BaseBoardItem, { BaseBoardItemEvents } from "../../Entities/BoardItems/BaseBoardItem";
 import RegularItemFactory from "../../Factories/RegularItemFactory";
 import SpecialItemFactory from "../../Factories/SpecialItemFactory";
-import { getPositionById, randomInt } from "../../Globals/GlobalConstants";
+import { getPositionById, randomInt } from "../../Globals/Globals";
 
 const {ccclass, property} = cc._decorator;
+
+export interface IBoardFillControllerConfig {
+    grid: BaseBoardItem[][],
+    gridSize: cc.Vec2,
+    itemsOffset: cc.Vec2,
+    itemsScreenOffset: cc.Vec2
+}
 
 @ccclass
 export default class BoardFillController extends cc.Component {
@@ -40,11 +47,11 @@ export default class BoardFillController extends cc.Component {
     }
 
     // Public region
-    public init(grid: BaseBoardItem[][], size: cc.Vec2, itemsOffset: cc.Vec2, itemsScreenOffset: cc.Vec2): void {
-        this.grid = grid;
-        this.gridSize = size;
-        this.itemsOffset = itemsOffset;
-        this.itemsScreenOffset = itemsScreenOffset;
+    public init(config: IBoardFillControllerConfig): void {
+        this.grid = config.grid;
+        this.gridSize = config.gridSize;
+        this.itemsOffset = config.itemsOffset;
+        this.itemsScreenOffset = config.itemsScreenOffset;
     }
 
     public setRegularItemClickCb(cb: (id: cc.Vec2) => void) {

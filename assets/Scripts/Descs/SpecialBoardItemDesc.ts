@@ -1,4 +1,4 @@
-import { SpecialItemsAbilityTypes } from "../Globals/GlobalConstants";
+import { SpecialItemsAbilityTypes } from "../Globals/Globals";
 import BaseBoardItemDesc from "./BaseBoardItemDesc";
 
 const {ccclass, property} = cc._decorator;
@@ -19,6 +19,9 @@ export default class SpecialBoardItemDesc extends BaseBoardItemDesc {
     @property(cc.SpriteFrame)
     private spriteFrame: cc.SpriteFrame = null;
 
+    @property({type: [cc.Integer]})
+    private additionalArgs: number[] = [];
+
     // Public region
     public getAbilityType(): SpecialItemsAbilityTypes {
         return this.abilityType;
@@ -31,4 +34,8 @@ export default class SpecialBoardItemDesc extends BaseBoardItemDesc {
     public getSpriteFrame(): cc.SpriteFrame {
         return this.spriteFrame;
     }
+
+    public getAdditionalArgs(): number[] {
+        return this.additionalArgs;
+    } 
 }
