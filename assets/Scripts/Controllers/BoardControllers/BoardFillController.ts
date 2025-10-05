@@ -1,7 +1,9 @@
 import RegularItemDesc from "../../Descs/RegularItemDesc";
+import SpecialBoardItemDesc from "../../Descs/SpecialBoardItemDesc";
 import BaseBoardItem, { BaseBoardItemEvents } from "../../Entities/BoardItems/BaseBoardItem";
 import RegularItemFactory from "../../Factories/RegularItemFactory";
-import { randomInt } from "../../Globals/GlobalConstants";
+import SpecialItemFactory from "../../Factories/SpecialItemFactory";
+import { getPositionById, randomInt } from "../../Globals/GlobalConstants";
 
 const {ccclass, property} = cc._decorator;
 
@@ -13,6 +15,9 @@ export default class BoardFillController extends cc.Component {
 
     @property(RegularItemFactory)
     private regularItemFactory: RegularItemFactory = null;
+
+    @property(SpecialItemFactory) 
+    private specialItemsFactory: SpecialItemFactory = null;
 
     @property([RegularItemDesc])
     private regularItemsDescs: RegularItemDesc[] = [];
@@ -65,7 +70,7 @@ export default class BoardFillController extends cc.Component {
                 regularItem.setId(cc.v2(x,y));
 
                 this.gridHolder.addChild(regularItem.node);
-                const position: cc.Vec3 = cc.v3(x * this.itemsOffset.x + this.itemsScreenOffset.x, y * this.itemsOffset.y + this.itemsScreenOffset.y, 0);
+                const position = getPositionById(cc.v2(x,y), this.itemsOffset, this.itemsScreenOffset);
                 regularItem.node.setPosition(position);
 
                 regularItem.getEventTarget().on(BaseBoardItemEvents.ON_CLICK, this.itemClickCb, this);
@@ -104,5 +109,27 @@ export default class BoardFillController extends cc.Component {
                 this.grid[x][y] = null;
             }
         }
+    }
+
+    public createSpecialItem(desc: SpecialBoardItemDesc, id: cc.Vec2): void {
+        if (desc == null) {
+            return;
+        }
+
+        const specialItem = this.specialItemsFactory.createSpecialItem();
+        
+        if (specialItem == null) {
+            cc.error("Cannot create special item");
+            return;
+        }
+
+        specialItem.init(desc);
+        specialItem.setId(id);
+        
+        this.gridHolder.addChild(specialItem.node);
+        const position = getPositionById(id, this.itemsOffset, this.itemsScreenOffset);
+        specialItem.node.setPosition(position);
+        specialItem.getEventTarget().on(BaseBoardItemEvents.ON_CLICK, this.itemClickCb, this);
+        this.grid[id.x][id.y] = specialItem;
     }
 }

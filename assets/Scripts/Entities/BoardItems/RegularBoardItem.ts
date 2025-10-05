@@ -18,17 +18,13 @@ export default class RegularBoardItem extends BaseBoardItem {
         }
 
         this.subscribeEvents();
-        let regularItemDesc =  desc as RegularItemDesc;
+        const regularItemDesc =  desc as RegularItemDesc;
         this.regularType = regularItemDesc.getType();
         this.setSpriteFrame(regularItemDesc.getSpriteFrame());
     }
 
     public getEntityType(): BoardEntitiesTypes {
         return BoardEntitiesTypes.REGULAR_ITEM;
-    }
-
-    public setRegularType(regularType: string): void {
-        this.regularType = regularType;
     }
 
     public getRegularType(): string {

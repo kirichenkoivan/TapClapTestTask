@@ -16,10 +16,11 @@ export default abstract class BaseBoardItem extends cc.Component {
 
     // Private region
     private eventTarget: cc.EventTarget = new cc.EventTarget();
-    private id: cc.Vec2 = cc.v2(-1, -1);
     private isChecked: boolean = false;
 
     // Protected region
+    protected id: cc.Vec2 = cc.v2(-1, -1);
+
     protected subscribeEvents(): void {
         this.node.on(cc.Node.EventType.MOUSE_DOWN, this.handleInputAction, this);
         this.node.on(cc.Node.EventType.TOUCH_END, this.handleInputAction, this);

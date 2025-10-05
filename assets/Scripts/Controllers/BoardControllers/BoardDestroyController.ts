@@ -117,4 +117,15 @@ export default class BoardDestroyController extends cc.Component {
         this.resetItemsChecked();
         return false;
     }
+
+    public destroyItemsInRow(id: cc.Vec2): void {
+        for(let y = 0; y < this.gridSize.y; y++) {
+            if (this.grid[id.x][y] == null) {
+                continue;
+            }
+
+            this.grid[id.x][y].fireWantToRemove();
+            this.grid[id.x][y] = null;
+        }
+    }
 }

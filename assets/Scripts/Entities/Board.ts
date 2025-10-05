@@ -1,6 +1,7 @@
 import BoardDestroyController from "../Controllers/BoardControllers/BoardDestroyController";
 import BoardFillController from "../Controllers/BoardControllers/BoardFillController";
 import BoardItemsMoveController from "../Controllers/BoardControllers/BoardItemsMoveController";
+import BoardSpecialItemsController from "../Controllers/BoardControllers/BoardSpecialItemsController";
 import BaseBoardItem from "./BoardItems/BaseBoardItem";
 
 const {ccclass, property} = cc._decorator;
@@ -28,6 +29,9 @@ export default class Board extends cc.Component {
     @property(BoardItemsMoveController)
     private boardItemsMoveController: BoardItemsMoveController = null;
 
+    @property(BoardSpecialItemsController)
+    private boardSpecialItemsController: BoardSpecialItemsController = null
+
     @property(cc.Vec2) 
     private itemsOffset: cc.Vec2 = cc.v2(100, 100);
     
@@ -42,7 +46,7 @@ export default class Board extends cc.Component {
     private maxBoardRefreshCount: number = 0;
     private currentBoardRefreshCount: number = 0;
 
-    private tryFillBoard(isInitial: boolean = false): void {
+    private tryFillBoard(): void {
         while(this.currentBoardRefreshCount <= this.maxBoardRefreshCount) {
             this.boardFillController.fillBoard();
 
@@ -66,6 +70,12 @@ export default class Board extends cc.Component {
         const destroyedGroupSize = this.boardDestroyController.tryDestroyItemsGroup(itemId);
 
         if (destroyedGroupSize > 0) {
+            const specialItemDesc = this.boardSpecialItemsController.getSpecialItemDescByAmount(destroyedGroupSize);
+
+            if (specialItemDesc != null) {
+                this.boardFillController.createSpecialItem(specialItemDesc, itemId);
+            }
+
             await this.boardItemsMoveController.dropDownItems();
             this.tryFillBoard();
 
@@ -87,7 +97,7 @@ export default class Board extends cc.Component {
         this.boardItemsMoveController.init(this.grid, this.boardSize, this.itemsOffset, this.itemsScreenOffset);
 
         this.boardFillController.cleanBoard(true);
-        this.tryFillBoard(true);
+        this.tryFillBoard();
     }
 
     public getEventTarget(): cc.EventTarget {
