@@ -21,14 +21,16 @@ export default abstract class BaseBoardItem extends cc.Component {
 
     // Protected region
     protected subscribeEvents(): void {
-        this.node.on(cc.Node.EventType.MOUSE_DOWN, this.handleMouseDown, this);
+        this.node.on(cc.Node.EventType.MOUSE_DOWN, this.handleInputAction, this);
+        this.node.on(cc.Node.EventType.TOUCH_END, this.handleInputAction, this);
     }
 
     protected unsubscribeEvents(): void {
-        this.node.off(cc.Node.EventType.MOUSE_DOWN, this.handleMouseDown, this);
+        this.node.off(cc.Node.EventType.MOUSE_DOWN, this.handleInputAction, this);
+        this.node.off(cc.Node.EventType.TOUCH_END, this.handleInputAction, this);
     }
 
-    protected handleMouseDown(): void {
+    protected handleInputAction(): void {
         this.eventTarget.emit(BaseBoardItemEvents.ON_CLICK, this.id);
     }
     
